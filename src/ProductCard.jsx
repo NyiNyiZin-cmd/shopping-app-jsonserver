@@ -1,17 +1,16 @@
-import React from "react";
 import { PlusIcon, CheckIcon } from "@heroicons/react/24/outline";
 
 const ProductCard = ({ product, onAddToCart, isInCart }) => {
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+    <div className="group bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 h-full flex flex-col">
       {/* Product Image */}
-      <div className="relative h-48 bg-gray-200">
+      <div className="relative h-48 bg-gray-200 flex-shrink-0">
         <img
           src={product.image}
           alt={product.name}
           className="w-full h-full object-cover"
         />
-        {product.discount && (
+        {product.discount > 0 && (
           <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-sm font-semibold">
             -{product.discount}%
           </div>
@@ -24,7 +23,7 @@ const ProductCard = ({ product, onAddToCart, isInCart }) => {
       </div>
 
       {/* Product Info */}
-      <div className="p-4">
+      <div className="p-4 flex flex-col flex-grow">
         <div className="mb-2">
           <span className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded">
             {product.category}

@@ -1,13 +1,101 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import ProductCard from "./ProductCard";
 import CartSidebar from "./CartSidebar";
 import { ShoppingCartIcon } from "@heroicons/react/24/outline";
-import { products } from "./data";
+import { getProducts } from "./api/products";
+
+// Animation variants
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.3 }
+  },
+  exit: { opacity: 0, y: -20 }
+};
+
+// Category button component
+const CategoryButton = ({ category, isActive, onClick }) => (
+  <motion.button
+    onClick={() => onClick(category)}
+    className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors duration-200 ${
+      isActive
+        ? 'bg-blue-600 text-white'
+        : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+    }`}
+    whileHover={{ scale: 1.05 }}
+    whileTap={{ scale: 0.95 }}
+  >
+    {category.charAt(0).toUpperCase() + category.slice(1)}
+  </motion.button>
+);
 
 const ShoppingCart = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [cartItems, setCartItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  
+  // Get unique categories from products
+  const categories = useMemo(() => {
+    const allCategories = ["all", ...new Set(products.map((p) => p.category || "uncategorized"))];
+    return allCategories.filter(Boolean);
+  }, [products]);
+  
+  // Filter products based on search term and category
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      const matchesSearch = 
+        product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesCategory = 
+        selectedCategory === "all" || 
+        product.category === selectedCategory;
+      
+      return matchesSearch && matchesCategory;
+    });
+  }, [products, searchTerm, selectedCategory]);
+  
+  // Handle category selection
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category);
+    // Smooth scroll to products
+    document.getElementById('products-grid')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Fetch products from the JSON server
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const data = await getProducts();
+        setProducts(data);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch products:', err);
+        setError('Failed to load products. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   // Cart တွင် item ထည့်ခြင်း
   const addToCart = (product) => {
@@ -47,10 +135,10 @@ const ShoppingCart = () => {
     );
   };
 
-  // Cart ရဲ့ စုစုပေါင်း items အရေအတွက်
-  const getTotalItems = () => {
+  // Get total number of items in cart
+  const getTotalItems = useMemo(() => {
     return cartItems.reduce((total, item) => total + item.quantity, 0);
-  };
+  }, [cartItems]);
 
   // Cart ရဲ့ စုစုပေါင်း စျေးနှုန်း
   const getTotalPrice = () => {
@@ -60,96 +148,168 @@ const ShoppingCart = () => {
     );
   };
 
-  // Search နဲ့ filter လုပ်ခြင်း
-  const filteredProducts = products.filter(
-    (product) =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-100">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900">
-                🛍️ Myanmar Shop
-              </h1>
-            </div>
-
-            {/* Search Bar */}
-            <div className="flex-1 max-w-lg mx-8">
-              <div className="relative">
+      <header className="bg-white shadow sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
+            <h1 className="text-2xl font-bold text-gray-900">🛍️ My Shop</h1>
+            
+            <div className="flex items-center space-x-4">
+              <div className="relative flex-1 max-w-md">
                 <input
                   type="text"
-                  placeholder="ပစ္စည်းရှာဖွေပါ..."
+                  placeholder="Search products..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-4 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
+              
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsCartOpen(true)}
+                className="p-2 text-gray-600 hover:text-gray-900 relative"
+                aria-label="Shopping Cart"
+              >
+                <ShoppingCartIcon className="h-6 w-6" />
+                {cartItems.length > 0 && (
+                  <motion.span 
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center"
+                  >
+                    {getTotalItems}
+                  </motion.span>
+                )}
+              </motion.button>
             </div>
-
-            {/* Cart Button */}
-            <button
-              onClick={() => setIsCartOpen(true)}
-              className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <ShoppingCartIcon className="h-6 w-6" />
-              {getTotalItems() > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {getTotalItems()}
-                </span>
-              )}
-            </button>
+          </div>
+          
+          {/* Categories */}
+          <div className="mt-4 overflow-x-auto pb-2">
+            <div className="flex space-x-2 pb-2">
+              <AnimatePresence initial={false}>
+                {categories.map((category) => (
+                  <CategoryButton
+                    key={category}
+                    category={category}
+                    isActive={selectedCategory === category}
+                    onClick={handleCategorySelect}
+                  />
+                ))}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
+      {/* Products Grid */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Summary Stats */}
-        <div className="mb-8 bg-white rounded-lg shadow p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center">
-              <h3 className="text-lg font-semibold text-gray-900">
-                စုစုပေါင်း ပစ္စည်းများ
-              </h3>
-              <p className="text-2xl font-bold text-blue-600">
-                {filteredProducts.length}
-              </p>
-            </div>
-            <div className="text-center">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Cart ထဲမှာ ရှိတဲ့ ပစ္စည်းများ
-              </h3>
-              <p className="text-2xl font-bold text-green-600">
-                {getTotalItems()}
-              </p>
-            </div>
-            <div className="text-center">
-              <h3 className="text-lg font-semibold text-gray-900">
-                စုစုပေါင်း ဈေးနှုန်း
-              </h3>
-              <p className="text-2xl font-bold text-purple-600">
-                {getTotalPrice().toLocaleString()} ကျပ်
-              </p>
-            </div>
+        {/* Stats Summary */}
+        <motion.div 
+          className="bg-white rounded-lg shadow p-6 mb-8 grid grid-cols-1 md:grid-cols-3 gap-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <div className="text-center p-4 bg-blue-50 rounded-lg">
+            <h3 className="text-sm font-medium text-gray-500">Total Products</h3>
+            <p className="mt-1 text-3xl font-semibold text-blue-600">
+              {products.length}
+            </p>
           </div>
-        </div>
+          <div className="text-center p-4 bg-green-50 rounded-lg">
+            <h3 className="text-sm font-medium text-gray-500">Items in Cart</h3>
+            <p className="mt-1 text-3xl font-semibold text-green-600">
+              {getTotalItems}
+            </p>
+          </div>
+          <div className="text-center p-4 bg-purple-50 rounded-lg">
+            <h3 className="text-sm font-medium text-gray-500">Total Price</h3>
+            <p className="mt-1 text-3xl font-semibold text-purple-600">
+              ${getTotalPrice().toFixed(2)}
+            </p>
+          </div>
+        </motion.div>
 
-        {/* Products Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onAddToCart={addToCart}
-              isInCart={cartItems.some((item) => item.id === product.id)}
-            />
-          ))}
+        <div id="products-grid" className="min-h-[50vh]">
+          {loading ? (
+            <motion.div 
+              className="text-center py-16"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+              <p className="mt-4 text-gray-600 text-lg">Loading products...</p>
+            </motion.div>
+          ) : error ? (
+            <motion.div 
+              className="text-center py-12 text-red-600"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              {error}
+            </motion.div>
+          ) : filteredProducts.length > 0 ? (
+            <motion.div 
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+              variants={container}
+              initial="hidden"
+              animate="show"
+              exit="exit"
+            >
+              <AnimatePresence mode="popLayout">
+                {filteredProducts.map((product) => (
+                  <motion.div
+                    key={product.id}
+                    layout
+                    variants={item}
+                    initial="hidden"
+                    animate="show"
+                    exit="exit"
+                    whileHover={{ 
+                      y: -8,
+                      boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                      transition: { 
+                        y: { type: 'spring', stiffness: 400, damping: 15 },
+                        boxShadow: { duration: 0.2 }
+                      }
+                    }}
+                    className="h-full"
+                  >
+                    <ProductCard
+                      product={product}
+                      onAddToCart={addToCart}
+                      isInCart={cartItems.some((item) => item.id === product.id)}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </motion.div>
+          ) : (
+            <motion.div 
+              className="text-center py-16 bg-white rounded-lg shadow"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+            >
+              <p className="text-lg text-gray-600">No products found</p>
+              {selectedCategory !== 'all' && (
+                <motion.button
+                  onClick={() => setSelectedCategory('all')}
+                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Clear Filters
+                </motion.button>
+              )}
+            </motion.div>
+          )}
         </div>
 
         {filteredProducts.length === 0 && (
