@@ -5,7 +5,7 @@ import tailwindcss from "@tailwindcss/vite";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  base: "/sample-app",
+  base: "/shopping-app-jsonserver",
   server: {
     historyApiFallback: true,
   },
