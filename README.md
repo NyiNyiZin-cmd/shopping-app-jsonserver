@@ -1,5 +1,13 @@
 # React + Vite
 
+To test=> https://NyiNyiZin-cmd.github.io/shopping-app-jsonserver/
+
+1.git clone https://github.com/NyiNyiZin-cmd/shopping-app-jsonserver.git
+2.npm install
+3.cd your-project-name
+4.npm run dev
+5.npm run server <= for json-server
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
