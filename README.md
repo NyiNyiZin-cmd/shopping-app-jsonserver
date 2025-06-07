@@ -1,6 +1,6 @@
 # React + Vite
 
-To test=> https://nyinyizin-cmd.github.io/
+To test=> https://nyinyizin-cmd.github.io/shopping-app-jsonserver/
 
 1.  git clone https://github.com/NyiNyiZin-cmd/shopping-app-jsonserver.git
 2.  npm install
