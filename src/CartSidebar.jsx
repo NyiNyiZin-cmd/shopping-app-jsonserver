@@ -23,7 +23,7 @@ const CartSidebar = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black bg-opacity-30 z-40"
+            className="fixed inset-0 bg-black/50 z-30"
           />
           
           {/* Cart sidebar */}
@@ -32,7 +32,7 @@ const CartSidebar = ({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'tween' }}
-            className="fixed right-0 top-0 h-full w-96 bg-white shadow-xl z-50 flex flex-col"
+            className="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-xl z-40 flex flex-col"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b">

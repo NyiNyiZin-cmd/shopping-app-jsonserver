@@ -137,6 +137,20 @@
       "discount": 0,
       "isNew": true,
       "id": "773b"
+    },
+    {
+      "id": "9906",
+      "name": "new one",
+      "description": "This is new products",
+      "price": 300,
+      "originalPrice": null,
+      "image": "https://images.unsplash.com/photo-1561154464-82e9adf32764?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8aXBhZHxlbnwwfHwwfHx8MA%3D%3D",
+      "category": "Electronics",
+      "stock": 10,
+      "rating": 5,
+      "reviews": 0,
+      "discount": 0,
+      "isNew": true
     }
   ]
 }
